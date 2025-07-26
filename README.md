@@ -151,6 +151,10 @@ This creates an admin user with:
 
 ### Development Mode
 ```bash
+# Install dependencies
+npm install
+
+# Run development server
 npm run dev
 ```
 
@@ -433,8 +437,6 @@ npm run format         # Run Prettier
 6. Submit a pull request
 
 ## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
