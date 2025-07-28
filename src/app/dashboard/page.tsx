@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, CheckCircle, Edit, LogOut, Database } from 'lucide-react';
+import { Loader2, CheckCircle, Edit, LogOut, } from 'lucide-react';
 import toast from 'react-hot-toast';
 import TodoForm from '@/components/TodoForm';
 import TodoNotification from '@/components/TodoNotification';
