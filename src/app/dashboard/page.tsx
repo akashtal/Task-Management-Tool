@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, CheckCircle, Edit, LogOut, } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 import TodoForm from '@/components/TodoForm';
 import TodoNotification from '@/components/TodoNotification';
 import EditTodoModal from '@/components/EditTodoModal';
@@ -27,8 +27,15 @@ export default function UserDashboard() {
   const [loading, setLoading] = useState(false);
   const [editingTodo, setEditingTodo] = useState<TodoType | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [debugInfo, setDebugInfo] = useState<any>(null);
-  const [dbInfo, setDbInfo] = useState<any>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+const todosPerPage = 3;
+
+const totalPages = Math.ceil(todos.length / todosPerPage);
+const paginatedTodos = todos.slice(
+  (currentPage - 1) * todosPerPage,
+  currentPage * todosPerPage
+);
+
 
   useEffect(() => {
     if (status !== 'loading' && !session) {
@@ -46,27 +53,30 @@ export default function UserDashboard() {
     }
   }, [session]);
 
-  const testAuth = async () => {
-    try {
-      const res = await fetch('/api/test-auth');
-      const data = await res.json();
-      setDebugInfo(data);
-      console.log('Auth test result:', data);
-    } catch (error) {
-      console.error('Auth test error:', error);
-    }
-  };
+const testAuth = async () => {
+  try {
+    const res = await fetch('/api/test-auth');
+    const data = await res.json();
+    console.log('Auth test result:', data);
+    toast.success('Auth check successful');
+  } catch (error) {
+    console.error('Auth test error:', error);
+    toast.error('Auth check failed');
+  }
+};
 
-  const testDatabase = async () => {
-    try {
-      const res = await fetch('/api/test-db');
-      const data = await res.json();
-      setDbInfo(data);
-      console.log('Database test result:', data);
-    } catch (error) {
-      console.error('Database test error:', error);
-    }
-  };
+
+const testDatabase = async () => {
+  try {
+    const res = await fetch('/api/test-db');
+    const data = await res.json();
+    console.log('Database test result:', data);
+    toast.success('Database connection successful');
+  } catch (error) {
+    console.error('Database test error:', error);
+    toast.error('Database check failed');
+  }
+};
 
   const fetchTodos = async () => {
     if (!session?.user?.id) {
@@ -79,7 +89,7 @@ export default function UserDashboard() {
       const res = await fetch('/api/todos');
       if (!res.ok) {
         const errorData = await res.json();
-        console.error('Failed to fetch todos:', errorData);
+toast.error('Failed to fetch todos');
         throw new Error(errorData.error || 'Failed to fetch');
       }
       const data = await res.json();
@@ -160,86 +170,126 @@ export default function UserDashboard() {
   }
 
   return (
-    <main className="max-w-2xl mx-auto mt-10">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <CheckCircle className="text-green-600" /> Welcome, {session.user.email}
-            </div>
-            <div className="flex items-center gap-2">
-              <ModeToggle />
-              <Button variant="outline" size="sm" onClick={handleLogout}>
-                <LogOut className="w-4 h-4 mr-1" />
-                Logout
-              </Button>
-            </div>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <TodoForm userId={Number(session.user.id)} onTodoCreated={fetchTodos} />
+<main className="max-w-2xl mx-auto mt-10 px-4 sm:px-6 lg:px-8">
+  <Card>
+    <CardHeader>
+      <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <CheckCircle className="text-green-600" />
+          <span className="break-all text-sm sm:text-base">Welcome, {session.user.email}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <ModeToggle />
+          <Button variant="outline" size="sm" onClick={handleLogout}>
+            <LogOut className="w-4 h-4 mr-1" />
+            Logout
+          </Button>
+        </div>
+      </CardTitle>
+    </CardHeader>
 
-          {todos.length > 0 && (
-            <TodoNotification todos={todos} userEmail={session.user.email || ''} />
-          )}
+    <CardContent className="space-y-4">
+      <TodoForm userId={Number(session.user.id)} onTodoCreated={fetchTodos} />
 
-          <h3 className="font-semibold">My Todos</h3>
-          {loading ? (
-            <p>Loading todos...</p>
-          ) : todos.length === 0 ? (
-            <p className="text-gray-500">No todos found.</p>
-          ) : (
-            todos.map((todo) => (
-              <div
-                key={todo.id}
-                className="flex justify-between items-center border rounded p-2"
-              >
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    checked={todo.completed}
-                    onCheckedChange={() => toggleComplete(todo.id)}
-                  />
-                  <div>
-                    <p className={todo.completed ? 'line-through text-gray-500' : ''}>
-                      {todo.title}
+      {todos.length > 0 && (
+        <TodoNotification todos={todos} userEmail={session.user.email || ''} />
+      )}
+
+      <h3 className="font-semibold text-lg">My Todos</h3>
+
+      {loading ? (
+        <p>Loading todos...</p>
+      ) : todos.length === 0 ? (
+        <p className="text-gray-500">No todos found.</p>
+      ) : (
+        <>
+          {paginatedTodos.map((todo) => (
+            <div
+              key={todo.id}
+              className="flex flex-col sm:flex-row sm:justify-between sm:items-center border rounded p-3 gap-2"
+            >
+              <div className="flex items-start gap-2">
+                <Checkbox
+                  checked={todo.completed}
+                  onCheckedChange={() => toggleComplete(todo.id)}
+                />
+                <div>
+                  <p className={todo.completed ? 'line-through text-gray-500' : ''}>
+                    {todo.title}
+                  </p>
+                  {todo.description && (
+                    <p className="text-xs text-muted-foreground break-words">
+                      {todo.description}
                     </p>
-                    {todo.description && (
-                      <p className="text-xs text-muted-foreground">
-                        {todo.description}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => openEditModal(todo)}
-                  >
-                    <Edit className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => deleteTodo(todo.id)}
-                  >
-                    Delete
-                  </Button>
+                  )}
                 </div>
               </div>
-            ))
-          )}
-        </CardContent>
-      </Card>
+              <div className="flex gap-2 justify-end">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => openEditModal(todo)}
+                >
+                  <Edit className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => deleteTodo(todo.id)}
+                >
+                  Delete
+                </Button>
+              </div>
+            </div>
+          ))}
 
-      {editingTodo && (
-        <EditTodoModal
-          todo={editingTodo}
-          isOpen={isEditModalOpen}
-          onClose={closeEditModal}
-          onSave={fetchTodos}
-        />
+          {totalPages > 1 && (
+            <div className="flex justify-center mt-4 gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              >
+                Previous
+              </Button>
+
+              {Array.from({ length: totalPages }, (_, i) => (
+                <Button
+                  key={i}
+                  variant={currentPage === i + 1 ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setCurrentPage(i + 1)}
+                >
+                  {i + 1}
+                </Button>
+              ))}
+
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+              >
+                Next
+              </Button>
+            </div>
+          )}
+        </>
       )}
-    </main>
+    </CardContent>
+  </Card>
+
+  {editingTodo && (
+    <EditTodoModal
+      todo={editingTodo}
+      isOpen={isEditModalOpen}
+      onClose={closeEditModal}
+      onSave={fetchTodos}
+    />
+  )}
+</main>
+
+
   );
 }

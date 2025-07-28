@@ -1,4 +1,5 @@
 'use client';
+
 import { useToast } from '@/components/ui/use-toast';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -26,7 +27,7 @@ const registerSchema = z
 
 type RegisterSchema = z.infer<typeof registerSchema>;
 
-export default function RegisterForm() {
+export default function RegisterPage() {
   const {
     register,
     handleSubmit,
@@ -41,7 +42,6 @@ export default function RegisterForm() {
 
   const onSubmit = async (data: RegisterSchema) => {
     setLoading(true);
-
     try {
       const res = await fetch('/api/register', {
         method: 'POST',
@@ -57,7 +57,6 @@ export default function RegisterForm() {
           description: result.message || 'Something went wrong.',
           variant: 'destructive',
         });
-        setLoading(false);
         return;
       }
 
@@ -84,7 +83,8 @@ export default function RegisterForm() {
     } catch (err) {
       toast({
         title: 'Error',
-        description: 'Could not complete registration.',
+        description:
+          err instanceof Error ? err.message : 'Could not complete registration.',
         variant: 'destructive',
       });
     } finally {
@@ -105,21 +105,33 @@ export default function RegisterForm() {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
               <Input placeholder="Email" {...register('email')} />
-              {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
+              {errors.email && (
+                <p className="text-sm text-red-500">{errors.email.message}</p>
+              )}
             </div>
 
             <div>
               <Input type="password" placeholder="Password" {...register('password')} />
-              {errors.password && <p className="text-sm text-red-500">{errors.password.message}</p>}
+              {errors.password && (
+                <p className="text-sm text-red-500">{errors.password.message}</p>
+              )}
             </div>
 
             <div>
-              <Input type="password" placeholder="Confirm Password" {...register('confirmPassword')} />
-              {errors.confirmPassword && <p className="text-sm text-red-500">{errors.confirmPassword.message}</p>}
+              <Input
+                type="password"
+                placeholder="Confirm Password"
+                {...register('confirmPassword')}
+              />
+              {errors.confirmPassword && (
+                <p className="text-sm text-red-500">
+                  {errors.confirmPassword.message}
+                </p>
+              )}
             </div>
 
             <div className="bg-blue-50 p-3 rounded-lg border text-sm text-blue-800 border-blue-200">
-              <strong>Note:</strong> Accounts require admin approval unless you're the admin.
+              <strong>Note:</strong> Accounts require admin approval unless you&apos;re the admin.
             </div>
 
             <Button type="submit" className="w-full" disabled={loading}>

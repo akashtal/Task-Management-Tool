@@ -27,7 +27,6 @@ export default function EditTodoModal({ todo, isOpen, onClose, onSave }: EditTod
 
   const handleSave = async () => {
     if (!title.trim()) {
-      toast.error('Title is required');
       return;
     }
 

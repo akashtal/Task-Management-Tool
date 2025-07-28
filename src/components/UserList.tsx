@@ -1,6 +1,14 @@
 import { Button } from "@/components/ui/button";
 
-export function UserList({ users }: { users: any[] }) {
+type User = {
+  id: number;
+  email: string;
+  approved: boolean;
+  role: string;
+  createdAt: string;
+};
+
+export function UserList({ users }: { users: User[] }) {
   if (!users.length) return <div>No pending users.</div>;
   const handleApprove = async (userId: number, approve: boolean) => {
     await fetch("/api/admin/users", {

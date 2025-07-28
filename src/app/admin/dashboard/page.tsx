@@ -1,12 +1,33 @@
 'use client';
 
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
+
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Shield, Users, LogOut, Check, X, ListTodo } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Table, TableHeader, TableRow, TableCell, TableBody, TableHead } from '@/components/ui/table';
+import {
+  Table,
+  TableHeader,
+  TableRow,
+  TableCell,
+  TableBody,
+  TableHead,
+} from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ModeToggle } from '@/components/ModeToggle';
@@ -19,7 +40,7 @@ const userSchema = z.object({
   email: z.string().email(),
   approved: z.boolean(),
   role: z.enum(['admin', 'user']),
-  createdAt: z.string().or(z.date()).transform(val =>
+  createdAt: z.string().or(z.date()).transform((val) =>
     val instanceof Date ? val.toISOString() : val
   ),
 });
@@ -29,6 +50,7 @@ const todoSchema = z.object({
   title: z.string(),
   description: z.string(),
   userEmail: z.string().email().nullable(),
+  completed: z.boolean(),
 });
 
 type User = z.infer<typeof userSchema>;
@@ -41,6 +63,16 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState<User[]>([]);
   const [todos, setTodos] = useState<Todo[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [todoPage, setTodoPage] = useState(1);
+  const todosPerPage = 6;
+
+  const paginatedTodos = todos.slice(
+    (todoPage - 1) * todosPerPage,
+    todoPage * todosPerPage
+  );
+
+  const totalTodoPages = Math.ceil(todos.length / todosPerPage);
 
   useEffect(() => {
     if (status === 'loading') return;
@@ -74,7 +106,10 @@ export default function AdminDashboard() {
     }
   };
 
-  const updateUserApproval = async (userId: number, status: 'approved' | 'rejected') => {
+  const updateUserApproval = async (
+    userId: number,
+    status: 'approved' | 'rejected'
+  ) => {
     try {
       const res = await fetch('/api/admin/user-status', {
         method: 'PATCH',
@@ -90,7 +125,7 @@ export default function AdminDashboard() {
         )
       );
 
-      toast.success(`User ${status === 'approved' ? 'approved' : 'rejected'} successfully.`);
+      toast.success(`User ${status} successfully.`);
     } catch (err) {
       toast.error(`Failed to ${status} user.`);
       console.error('Update error:', err);
@@ -108,13 +143,14 @@ export default function AdminDashboard() {
   if (!session || session.user.role !== 'admin') return null;
 
   return (
-    <div className="min-h-screen bg-muted px-6 py-8">
-      <header className="flex justify-between items-center mb-8">
+    <div className="min-h-screen bg-muted px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      {/* Header */}
+      <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div className="flex items-center gap-3">
           <Shield className="text-red-600" />
           <h1 className="text-2xl font-bold text-foreground">Admin Dashboard</h1>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-3">
           <Badge variant="secondary">{session.user.email}</Badge>
           <ModeToggle />
           <Button variant="outline" size="sm" onClick={() => signOut()}>
@@ -123,7 +159,7 @@ export default function AdminDashboard() {
         </div>
       </header>
 
-      {/* Section: User Management */}
+      {/* User Management Section */}
       <Card className="mb-8 shadow-lg border">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-xl">
@@ -146,7 +182,7 @@ export default function AdminDashboard() {
             <TableBody>
               {users.map((user) => (
                 <TableRow key={user.id}>
-                  <TableCell>{user.email}</TableCell>
+                  <TableCell className="break-words max-w-[150px]">{user.email}</TableCell>
                   <TableCell>
                     <Badge variant={user.role === 'admin' ? 'destructive' : 'default'}>
                       {user.role}
@@ -157,10 +193,8 @@ export default function AdminDashboard() {
                       {user.approved ? 'Approved' : 'Pending'}
                     </Badge>
                   </TableCell>
-                  <TableCell>
-                    {new Date(user.createdAt).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell className="flex gap-2">
+                  <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
+                  <TableCell className="flex flex-wrap gap-2">
                     {!user.approved ? (
                       <Button size="sm" onClick={() => updateUserApproval(user.id, 'approved')}>
                         <Check className="w-4 h-4 mr-1" /> Approve
@@ -182,7 +216,7 @@ export default function AdminDashboard() {
         </CardContent>
       </Card>
 
-      {/* Section: Todo List */}
+      {/* Todos Section with Pagination */}
       <Card className="shadow-lg border">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-xl">
@@ -195,17 +229,67 @@ export default function AdminDashboard() {
           {todos.length === 0 ? (
             <p className="text-muted-foreground text-center py-4">No todos available</p>
           ) : (
-            <ul className="grid gap-4">
-              {todos.map((todo) => (
-                <li key={todo.id} className="border rounded-xl p-4 bg-white dark:bg-background">
-                  <div className="flex justify-between items-center mb-2">
-                    <h3 className="font-semibold text-lg">{todo.title}</h3>
-                    <Badge variant="secondary">{todo.userEmail || 'Unknown'}</Badge>
-                  </div>
-                  <p className="text-muted-foreground text-sm">{todo.description}</p>
-                </li>
-              ))}
-            </ul>
+            <>
+              <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {paginatedTodos.map((todo) => (
+                  <li
+                    key={todo.id}
+                    className="border rounded-xl p-4 bg-white dark:bg-background shadow-sm"
+                  >
+                    <div className="flex justify-between items-center mb-2 flex-wrap gap-2">
+                      <h3 className="font-semibold text-lg break-words">{todo.title}</h3>
+                      <Badge variant="secondary">{todo.userEmail || 'Unknown'}</Badge>
+                      <Badge variant={todo.completed ? 'default' : 'secondary'}>
+                        {todo.completed ? 'Completed' : 'Incomplete'}
+                      </Badge>
+                    </div>
+                    <p className="text-muted-foreground text-sm break-words">
+                      {todo.description}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+
+              {/* Pagination Controls */}
+              {totalTodoPages > 1 && (
+                <Pagination className="mt-6">
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setTodoPage((prev) => Math.max(prev - 1, 1));
+                        }}
+                      />
+                    </PaginationItem>
+                    {Array.from({ length: totalTodoPages }).map((_, i) => (
+                      <PaginationItem key={i}>
+                        <PaginationLink
+                          href="#"
+                          isActive={todoPage === i + 1}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setTodoPage(i + 1);
+                          }}
+                        >
+                          {i + 1}
+                        </PaginationLink>
+                      </PaginationItem>
+                    ))}
+                    <PaginationItem>
+                      <PaginationNext
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setTodoPage((prev) => Math.min(prev + 1, totalTodoPages));
+                        }}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              )}
+            </>
           )}
         </CardContent>
       </Card>

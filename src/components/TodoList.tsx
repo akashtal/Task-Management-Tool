@@ -6,10 +6,23 @@ import { notifyAdmin, notifyUserDue } from '@/lib/notify';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 
-export default function TodoList({ todos, userEmail, userId }: any) {
+type Todo = {
+  id: string;
+  title: string;
+  completed: boolean;
+  dueDate: string;
+};
+
+type Props = {
+  todos: Todo[];
+  userEmail: string;
+  userId: string;
+};
+
+export default function TodoList({ todos, userEmail, userId }: Props) {
   const [filter, setFilter] = useState<'all' | 'complete' | 'incomplete'>('all');
 
-  const filteredTodos = todos.filter((todo: any) => {
+  const filteredTodos = todos.filter((todo) => {
     if (filter === 'all') return true;
     return filter === 'complete' ? todo.completed : !todo.completed;
   });
@@ -17,7 +30,7 @@ export default function TodoList({ todos, userEmail, userId }: any) {
   useEffect(() => {
     const interval = setInterval(() => {
       const now = new Date();
-      todos.forEach((todo: any) => {
+      todos.forEach((todo) => {
         if (!todo.completed && new Date(todo.dueDate) < now) {
           notifyUserDue(userEmail, todo.title);
         }
@@ -25,10 +38,10 @@ export default function TodoList({ todos, userEmail, userId }: any) {
     }, 10000);
 
     return () => clearInterval(interval);
-  }, [todos]);
+  }, [todos, userEmail]);
 
-  const handleComplete = async (todo: any) => {
-    await updateTodoStatus(todo.id, !todo.completed);
+  const handleComplete = async (todo: Todo) => {
+await updateTodoStatus(Number(todo.id), !todo.completed);
     if (!todo.completed) {
       await notifyAdmin(userEmail, todo.title);
     }
@@ -43,24 +56,44 @@ export default function TodoList({ todos, userEmail, userId }: any) {
   return (
     <div className="space-y-4">
       <div className="flex gap-2">
-        <Button variant="outline" onClick={() => setFilter('all')}>All</Button>
-        <Button variant="outline" onClick={() => setFilter('complete')}>Completed</Button>
-        <Button variant="outline" onClick={() => setFilter('incomplete')}>Incomplete</Button>
+        <Button variant="outline" onClick={() => setFilter('all')}>
+          All
+        </Button>
+        <Button variant="outline" onClick={() => setFilter('complete')}>
+          Completed
+        </Button>
+        <Button variant="outline" onClick={() => setFilter('incomplete')}>
+          Incomplete
+        </Button>
       </div>
 
       {filteredTodos.length === 0 ? (
         <p>No todos found.</p>
       ) : (
-        filteredTodos.map((todo: any) => (
-          <div key={todo.id} className="flex justify-between items-center bg-gray-100 p-3 rounded">
+        filteredTodos.map((todo) => (
+          <div
+            key={todo.id}
+            className="flex justify-between items-center bg-gray-100 p-3 rounded"
+          >
             <div className="flex items-center gap-2">
-              <Checkbox checked={todo.completed} onCheckedChange={() => handleComplete(todo)} />
+              <Checkbox
+                checked={todo.completed}
+                onCheckedChange={() => handleComplete(todo)}
+              />
               <div>
-                <p className={todo.completed ? 'line-through' : ''}>{todo.title}</p>
+                <p className={todo.completed ? 'line-through' : ''}>
+                  {todo.title}
+                </p>
                 <small>Due: {new Date(todo.dueDate).toLocaleString()}</small>
               </div>
             </div>
-            <Button variant="destructive" size="sm" onClick={() => handleDelete(todo.id)}>Delete</Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => handleDelete(todo.id)}
+            >
+              Delete
+            </Button>
           </div>
         ))
       )}

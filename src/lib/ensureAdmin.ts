@@ -1,6 +1,5 @@
 import { db } from "@/lib/drizzle";
 import { users } from "@/lib/schema";
-import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 
 export async function ensureAdmin() {

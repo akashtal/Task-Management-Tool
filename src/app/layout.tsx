@@ -2,8 +2,9 @@
 import './globals.css';
 import type { ReactNode } from 'react';
 import SessionWrapper from '@/components/SessionWrapper';
-import { Toaster } from 'react-hot-toast';
 import { ThemeProvider } from '@/components/ThemeProvider';
+import { Toaster } from '@/components/ui/toaster';
+import { ToastProvider } from '@/components/ui/use-toast';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 
 export default function RootLayout({ children }: { children: ReactNode }) {
@@ -17,9 +18,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           disableTransitionOnChange
         >
           <SessionWrapper>
-            {children}
-             <SpeedInsights />
-            <Toaster position="top-right" />
+            <ToastProvider>
+              {children}
+              <SpeedInsights />
+              <Toaster />
+            </ToastProvider>
           </SessionWrapper>
         </ThemeProvider>
       </body>

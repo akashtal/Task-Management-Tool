@@ -4,14 +4,16 @@
 import * as React from 'react'
 import { ToastProps } from '@radix-ui/react-toast'
 
+type ToastVariant = 'default' | 'destructive'
+
 type ToasterToast = ToastProps & {
-  id: string
+  id?: string
   title?: React.ReactNode
   description?: React.ReactNode
   action?: React.ReactNode
+  variant?: ToastVariant // ✅ Add this line
 }
 
-type ToastActionElement = React.ReactElement
 
 const ToastContext = React.createContext<{
   toasts: ToasterToast[]

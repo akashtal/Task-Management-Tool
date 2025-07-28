@@ -11,11 +11,11 @@ interface TodoNotificationProps {
     title: string;
     completed: boolean;
   }>;
-  userEmail: string;
+  userEmail: string; // ✅ Add this line
 }
 
 export default function TodoNotification({ todos, userEmail }: TodoNotificationProps) {
-  const [pendingCount, setPendingCount] = useState(0);
+    const [pendingCount, setPendingCount] = useState(0);
 
   useEffect(() => {
     const pending = todos.filter(todo => !todo.completed).length;
@@ -31,8 +31,7 @@ export default function TodoNotification({ todos, userEmail }: TodoNotificationP
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-sm">
           <Bell className="w-4 h-4 text-yellow-600" />
-          Pending Tasks
-        </CardTitle>
+Pending Tasks for {userEmail}        </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="flex items-center justify-between">
